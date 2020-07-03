@@ -52,5 +52,14 @@ public interface GoodsService extends IService<Goods> {
      * @author Fuqiang
      * @date 2020/6/30 0030 15:39
      */
-    void secondKillPlus(GoodParam param);
+    void secondKillRedis(GoodParam param);
+
+    /**
+     * @param param
+     * @return void
+     * @description TODO     redisson分布式锁秒杀
+     * @author Fuqiang
+     * @date 2020/7/3 0003 9:28
+     */
+    void secondKillRedisson(GoodParam param);
 }

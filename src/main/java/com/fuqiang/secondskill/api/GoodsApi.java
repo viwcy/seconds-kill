@@ -63,9 +63,29 @@ public class GoodsApi extends BaseController {
         return success(goodsService.secondKill(param));
     }
 
-    @PostMapping("/killPlus")
-    public ResultEntity killPlus(@RequestBody GoodParam param) {
-        goodsService.secondKillPlus(param);
+    /**
+     * @param param
+     * @return com.fuqiang.basecommons.common.ResultEntity
+     * @description TODO     基于redis分布式锁秒杀
+     * @author Fuqiang
+     * @date 2020/7/2 0002 10:27
+     */
+    @PostMapping("/killRedis")
+    public ResultEntity killRedis(@RequestBody GoodParam param) {
+        goodsService.secondKillRedis(param);
+        return success();
+    }
+
+    /**
+     * @param param
+     * @return com.fuqiang.basecommons.common.ResultEntity
+     * @description TODO     基于redisson分布式锁秒杀
+     * @author Fuqiang
+     * @date 2020/7/2 0002 10:29
+     */
+    @PostMapping("/killRedisson")
+    public ResultEntity killRedisson(@RequestBody GoodParam param) {
+        goodsService.secondKillRedisson(param);
         return success();
     }
 }

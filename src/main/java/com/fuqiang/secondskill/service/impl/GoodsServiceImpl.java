@@ -11,6 +11,8 @@ import com.fuqiang.secondskill.model.param.GoodParam;
 import com.fuqiang.secondskill.model.pojo.Goods;
 import com.fuqiang.secondskill.service.GoodsService;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -42,6 +44,8 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
     private RedisTemplate redisTemplate;
     @Autowired
     private RedisLockUtil redisLockUtil;
+    @Autowired
+    private RedissonClient redissonClient;
 
     /**
      * @param []
@@ -113,9 +117,9 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
      * @date 2020/6/30 0030 15:39
      */
     @Override
-    public void secondKillPlus(GoodParam param) {
+    public void secondKillRedis(GoodParam param) {
         String id = new Random().nextInt(100) + "";
-        boolean tryLock = redisLockUtil.tryLock(param.getId(), id, 3L, TimeUnit.SECONDS);
+        boolean tryLock = redisLockUtil.tryLock(param.getId(), id, 1L, TimeUnit.SECONDS);
         if (tryLock) {
             log.info("用户{}获取锁成功", id);
             String value = redisTemplate.opsForValue().get(Constants.REDIS_GOOD_PREFIX + param.getId() + ":" + param.getName()).toString();
@@ -134,5 +138,40 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
                 log.info("用户{}释放锁失败", id);
             }
         }
+    }
+
+    /**
+     * @param param
+     * @return void
+     * @description TODO     redisson分布式锁秒杀
+     * @author Fuqiang
+     * @date 2020/7/3 0003 9:29
+     */
+    @Override
+    public void secondKillRedisson(GoodParam param) {
+        String id = new Random().nextInt(100) + "";
+        RLock lock = redissonClient.getLock(param.getId());
+
+        boolean abSent = false;
+        try {
+            abSent = lock.tryLock(1L, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (abSent) {
+            log.info("用户{}获取锁成功", id);
+            String value = redisTemplate.opsForValue().get(Constants.REDIS_GOOD_PREFIX + param.getId() + ":" + param.getName()).toString();
+            int anInt = Integer.parseInt(value);
+            if (anInt <= 0) {
+                log.info("商品已售罄，欢迎下次抢购!");
+            } else {
+                redisTemplate.opsForValue().set(Constants.REDIS_GOOD_PREFIX + param.getId() + ":" + param.getName(), (anInt - 1) + "");
+                log.info("用户{}抢购成功，商品id: {}", id, param.getId());
+            }
+            lock.unlock();
+            log.info("用户{}释放锁成功", id);
+            System.out.println();
+        }
+
     }
 }
