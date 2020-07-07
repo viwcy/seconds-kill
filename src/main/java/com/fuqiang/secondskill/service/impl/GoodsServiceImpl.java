@@ -128,7 +128,7 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
                 log.info("商品已售罄，欢迎下次抢购!");
             } else {
                 redisTemplate.opsForValue().set(Constants.REDIS_GOOD_PREFIX + param.getId() + ":" + param.getName(), (anInt - 1) + "");
-                log.info("用户{}抢购成功，商品id: {}", id, param.getId());
+                log.info("用户{}抢购成功，商品余量: {}", id, (anInt - 1));
             }
             boolean releaseLock = redisLockUtil.releaseLock(param.getId(), id);
             if (releaseLock) {
@@ -143,7 +143,7 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
     /**
      * @param param
      * @return void
-     * @description TODO     redisson分布式锁秒杀
+     * @description TODO     redisson分布式锁秒杀，可针对集群和主从模式加锁解锁，完美。
      * @author Fuqiang
      * @date 2020/7/3 0003 9:29
      */
@@ -166,10 +166,13 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
                 log.info("商品已售罄，欢迎下次抢购!");
             } else {
                 redisTemplate.opsForValue().set(Constants.REDIS_GOOD_PREFIX + param.getId() + ":" + param.getName(), (anInt - 1) + "");
-                log.info("用户{}抢购成功，商品id: {}", id, param.getId());
+                log.info("用户{}抢购成功，商品余量: {}", id, (anInt - 1));
             }
             lock.unlock();
             log.info("用户{}释放锁成功", id);
+            System.out.println();
+        } else {
+            log.info("用户{}获取锁失败", id);
             System.out.println();
         }
 

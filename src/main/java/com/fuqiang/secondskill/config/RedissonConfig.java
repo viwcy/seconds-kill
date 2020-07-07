@@ -1,5 +1,6 @@
 package com.fuqiang.secondskill.config;
 
+import com.alibaba.fastjson.JSON;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
@@ -21,8 +22,6 @@ import org.springframework.context.annotation.Configuration;
 public class RedissonConfig {
 
     private static final String REDIS_URL_PREFIX = "redis://";
-    @Value("${spring.redis.password}")
-    private String password;
     @Value("${spring.redis.cluster.nodes}")
     private String clusterNodes;
 
@@ -36,8 +35,9 @@ public class RedissonConfig {
         for (int i = 0; i < split.length; i++) {
             strings[i] = REDIS_URL_PREFIX + split[i];
         }
+        System.out.println(JSON.toJSONString(strings));
         /** 集群状态扫描间隔，单位ms；nodes节点 */
-        config.useClusterServers().setScanInterval(10000).addNodeAddress(strings).setPassword(password);
+        config.useClusterServers().setScanInterval(10000).addNodeAddress(strings);
         return Redisson.create(config);
     }
 }
